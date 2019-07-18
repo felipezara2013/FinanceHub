@@ -47,7 +47,6 @@ def swap_fixed_leg_cf(today, rate, busdays, calendartype, maturity=10, periodcup
 
     return df
 
-
 print(swap_fixed_leg_cf('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 6, 10000000))
 
 
