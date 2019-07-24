@@ -82,7 +82,6 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
 
     df2['Cash Flow'] = df2['Payment'] + df2['Principal']
 
-
     lista = []
     for contador in df2.index + 1:
         value_disc = 1 / ((1 + (6 / 12) * zero_rate) ** contador)
