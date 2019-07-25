@@ -93,4 +93,5 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
 
     return df2
 
+
 print(swap_floating_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 3, -10000000))
