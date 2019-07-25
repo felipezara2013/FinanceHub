@@ -51,7 +51,7 @@ def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcup
 
     lista = []
     for contador in df.index + 1:
-        value_disc = 1 / ((1 + (6 / 12) * rate) ** contador)
+        value_disc = 1 / ((1 + (periodcupons / 12) * rate) ** contador)
         lista.append(value_disc)
 
 
@@ -84,7 +84,7 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
 
     lista = []
     for contador in df2.index + 1:
-        value_disc = 1 / ((1 + (6 / 12) * zero_rate) ** contador)
+        value_disc = 1 / ((1 + (periodcupons2/ 12) * zero_rate) ** contador)
         lista.append(value_disc)
 
 
