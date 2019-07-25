@@ -44,15 +44,17 @@ def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcup
     lastline = df.tail(1)
     df.loc[lastline.index, 'Principal'] = notional
 
-    df['Payment'] = (df['days'] / 360) * rate * df['Notional']
+    df['Payment'] = (df['days']/ 360) * rate * df['Notional']
 
     df['Cash Flow'] = df['Payment'] + df['Principal']
 
 
     lista = []
+    i=0
     for contador in df.index + 1:
-        value_disc = 1 / ((1 + (periodcupons / 12) * rate) ** contador)
+        value_disc = 1 / ((1 + (df['days'][i]/ 360)* rate) ** contador)
         lista.append(value_disc)
+        i+=1
 
 
     df["Discount"] = lista
@@ -82,13 +84,14 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
 
     df2['Cash Flow'] = df2['Payment'] + df2['Principal']
 
-    lista = []
+    lista2 = []
+    i=0
     for contador in df2.index + 1:
-        value_disc = 1 / ((1 + (periodcupons2/ 12) * zero_rate) ** contador)
-        lista.append(value_disc)
+        value_disc = 1 / ((1 +(df2['days'][i] / 360)  * zero_rate) ** contador)
+        lista2.append(value_disc)
+        i+=1
 
-
-    df2["Discount"] = lista
+    df2["Discount"] = lista2
     df2['Present Value'] = (df2['Cash Flow'] * df2['Discount'])
 
     return df2
