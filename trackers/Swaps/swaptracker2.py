@@ -68,15 +68,15 @@ from pandas.tseries.offsets import DateOffset
 # df_bbg = bbg.fetch_contract_parameter(tickers, "PX_LAST")
 # df_bbg_m = bbg.fetch_contract_parameter(tickers, "MATURITY")
 ################  teste ################
+
 lista = [2.3,2.4,2.5,2.6,2.7]
 df_bbg = lista
 lista2 = ["07/31/2019", "08/31/2019", "09/30/2019", "10/31/2019", "11/30/2019"]
 df_bbg_m = lista2
 df_bbg_m = pd.to_datetime(df_bbg_m)
 interpolate_zero_curve = pd.Series(df_bbg, index = df_bbg_m)
+interpolate_zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
 
-x = interpolate_zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
-print(x)
 
 def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
     dc1 = DayCounts(busdays, calendar=calendartype)
