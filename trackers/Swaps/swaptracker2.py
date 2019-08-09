@@ -4,81 +4,115 @@ from pandas.tseries.offsets import DateOffset
 from bloomberg import BBG
 
 bbg = BBG()
+#tickers para zero curve
 
-tickers = ['S0023Z 1Y BLC2 Curncy',
-          'S0023Z 1D BLC2 Curncy',
-          'S0023Z 3M BLC2 Curncy',
-          'S0023Z 1W BLC2 Curncy',
-          'S0023Z 10Y BLC2 Curncy',
-          'S0023Z 1M BLC2 Curncy',
-          'S0023Z 2Y BLC2 Curncy',
-          'S0023Z 6M BLC2 Curncy',
-          'S0023Z 2M BLC2 Curncy',
-          'S0023Z 5Y BLC2 Curncy',
-          'S0023Z 4M BLC2 Curncy',
-          'S0023Z 2D BLC2 Curncy',
-          'S0023Z 9M BLC2 Curncy',
-          'S0023Z 3Y BLC2 Curncy',
-          'S0023Z 4Y BLC2 Curncy',
-          'S0023Z 50Y BLC2 Curncy',
-          'S0023Z 12Y BLC2 Curncy',
-          'S0023Z 18M BLC2 Curncy',
-          'S0023Z 7Y BLC2 Curncy',
-          'S0023Z 5M BLC2 Curncy',
-          'S0023Z 1Y BLC Curncy',
-          'S0023Z 6Y BLC2 Curncy',
-          'S0023Z 2W BLC2 Curncy',
-          'S0023Z 11M BLC2 Curncy',
-          'S0023Z 15M BLC2 Curncy',
-          'S0023Z 21M BLC2 Curncy',
-          'S0023Z 15Y BLC2 Curncy',
-          'S0023Z 25Y BLC2 Curncy',
-          'S0023Z 8Y BLC2 Curncy',
-          'S0023Z 10M BLC2 Curncy',
-          'S0023Z 1D BLC Curncy',
-          'S0023Z 20Y BLC2 Curncy',
-          'S0023Z 33M BLC2 Curncy',
-          'S0023Z 7M BLC2 Curncy',
-          'S0023Z 8M BLC2 Curncy',
-          'S0023Z 11Y BLC2 Curncy',
-          'S0023Z 14Y BLC2 Curncy',
-          'S0023Z 18Y BLC2 Curncy',
-          'S0023Z 19Y BLC2 Curncy',
-          'S0023Z 23D BLC2 Curncy',
-          'S0023Z 9Y BLC2 Curncy',
-          'S0023Z 10Y BLC Curncy',
-          'S0023Z 10Y ICPL Curncy',
-          'S0023Z 17M BLC2 Curncy',
-          'S0023Z 1I BLC2 Curncy',
-          'S0023Z 1M BLC Curncy',
-          'S0023Z 22Y BLC2 Curncy',
-          'S0023Z 28Y BLC2 Curncy',
-          'S0023Z 2I BLC2 Curncy',
-          'S0023Z 2W BLC Curncy',
-          'S0023Z 30Y BLC2 Curncy',
-          'S0023Z 31Y BLC2 Curncy',
-          'S0023Z 32Y BLC2 Curncy',
-          'S0023Z 38Y BLC2 Curncy',
-          'S0023Z 39Y BLC2 Curncy',
-          'S0023Z 40Y BLC2 Curncy',
-          'S0023Z 42D BLC2 Curncy',
-          'S0023Z 48Y BLC2 Curncy',
-          'S0023Z 6M BLC Curncy']
+tickers_zero_curve = ['S0023Z 1Y BLC2 Curncy',
+                      'S0023Z 1D BLC2 Curncy',
+                      'S0023Z 3M BLC2 Curncy',
+                      'S0023Z 1W BLC2 Curncy',
+                      'S0023Z 10Y BLC2 Curncy',
+                      'S0023Z 1M BLC2 Curncy',
+                      'S0023Z 2Y BLC2 Curncy',
+                      'S0023Z 6M BLC2 Curncy',
+                      'S0023Z 2M BLC2 Curncy',
+                      'S0023Z 5Y BLC2 Curncy',
+                      'S0023Z 4M BLC2 Curncy',
+                      'S0023Z 2D BLC2 Curncy',
+                      'S0023Z 9M BLC2 Curncy',
+                      'S0023Z 3Y BLC2 Curncy',
+                      'S0023Z 4Y BLC2 Curncy',
+                      'S0023Z 50Y BLC2 Curncy',
+                      'S0023Z 12Y BLC2 Curncy',
+                      'S0023Z 18M BLC2 Curncy',
+                      'S0023Z 7Y BLC2 Curncy',
+                      'S0023Z 5M BLC2 Curncy',
+                      'S0023Z 1Y BLC Curncy',
+                      'S0023Z 6Y BLC2 Curncy',
+                      'S0023Z 2W BLC2 Curncy',
+                      'S0023Z 11M BLC2 Curncy',
+                      'S0023Z 15M BLC2 Curncy',
+                      'S0023Z 21M BLC2 Curncy',
+                      'S0023Z 15Y BLC2 Curncy',
+                      'S0023Z 25Y BLC2 Curncy',
+                      'S0023Z 8Y BLC2 Curncy',
+                      'S0023Z 10M BLC2 Curncy',
+                      'S0023Z 1D BLC Curncy',
+                      'S0023Z 20Y BLC2 Curncy',
+                      'S0023Z 33M BLC2 Curncy',
+                      'S0023Z 7M BLC2 Curncy',
+                      'S0023Z 8M BLC2 Curncy',
+                      'S0023Z 11Y BLC2 Curncy',
+                      'S0023Z 14Y BLC2 Curncy',
+                      'S0023Z 18Y BLC2 Curncy',
+                      'S0023Z 19Y BLC2 Curncy',
+                      'S0023Z 23D BLC2 Curncy',
+                      'S0023Z 9Y BLC2 Curncy',
+                      'S0023Z 10Y BLC Curncy',
+                      'S0023Z 10Y ICPL Curncy',
+                      'S0023Z 17M BLC2 Curncy',
+                      'S0023Z 1I BLC2 Curncy',
+                      'S0023Z 1M BLC Curncy',
+                      'S0023Z 22Y BLC2 Curncy',
+                      'S0023Z 28Y BLC2 Curncy',
+                      'S0023Z 2I BLC2 Curncy',
+                      'S0023Z 2W BLC Curncy',
+                      'S0023Z 30Y BLC2 Curncy',
+                      'S0023Z 31Y BLC2 Curncy',
+                      'S0023Z 32Y BLC2 Curncy',
+                      'S0023Z 38Y BLC2 Curncy',
+                      'S0023Z 39Y BLC2 Curncy',
+                      'S0023Z 40Y BLC2 Curncy',
+                      'S0023Z 42D BLC2 Curncy',
+                      'S0023Z 48Y BLC2 Curncy',
+                      'S0023Z 6M BLC Curncy']
 
-df_bbg = bbg.fetch_series(tickers, "PX_LAST",
+df_bbg = bbg.fetch_series(tickers_zero_curve, "PX_LAST",
                           startdate = pd.to_datetime('today'),
                           enddate = pd.to_datetime('today'))
 df_bbg = df_bbg.transpose()
-df_bbg_m = bbg.fetch_contract_parameter(tickers, "MATURITY")
+df_bbg_m = bbg.fetch_contract_parameter(tickers_zero_curve, "MATURITY")
 
-print(df_bbg_m)
-print(df_bbg)
+#tickers para floating leg
 
-# TODO achar o ero em interpolar, está aparecendo 'Timestamp' object is not subscriptable :
+tickers_floating_leg = ["US0003M CMPN Index",
+                        "EDZ9 BGN Comdty",
+                        "EDH0 BGN Comdty",
+                        "EDM0 BGN Comdty",
+                        "EDU0 BGN Comdty",
+                        "EDZ0 BGN Comdty",
+                        "USSWAP2 BGN Curncy",
+                        "USSWAP3 BGN Curncy",
+                        "USSWAP4 BGN Curncy",
+                        "USSWAP5 BGN Curncy",
+                        "USSW6 BGN Curncy",
+                        "USSWAP7 BGN Curncy",
+                        "USSW8 BGN Curncy",
+                        "USSW9 BGN Curncy",
+                        "USSWAP10 BGN Curncy",
+                        "USSWAP11 BGN Curncy",
+                        "USSWAP12 BGN Curncy",
+                        "USSWAP15 BGN Curncy",
+                        "USSWAP20 BGN Curncy",
+                        "USSWAP25 BGN Curncy",
+                        "USSWAP30 BGN Curncy",
+                        "USSWAP40 BGN Curncy",
+                        "USSWAP50 BGN Curncy"]
 
-# interpolate_zero_curve = pd.Series(df_bbg, index = df_bbg_m)
+bbg_floating_leg = bbg.fetch_series(tickers_floating_leg, "PX_LAST",
+                          startdate = pd.to_datetime('today'),
+                          enddate = pd.to_datetime('today'))
+bbg_floating_leg = bbg_floating_leg.transpose()
+
+print(bbg_floating_leg)
+
+bbg_floating_leg_m = bbg.fetch_contract_parameter(tickers_floating_leg, "MATURITY")
+
+
+# TODO achar o erro em interpolar, está aparecendo 'Timestamp' object is not subscriptable :
+
+# interpolate_zero_curve = pd.Series (data = df_bbg, index = df_bbg_m)
 # interpolate_zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
-#
+# print(interpolate_zero_curve)
 
 def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
     dc1 = DayCounts(busdays, calendar=calendartype)
