@@ -2,6 +2,9 @@ from calendars import DayCounts
 import pandas as pd
 from pandas.tseries.offsets import DateOffset
 from bloomberg import BBG
+import numpy as np
+
+
 
 bbg = BBG()
 #tickers para zero curve
@@ -73,14 +76,31 @@ df_bbg = df_bbg.transpose()
 df_bbg_m = bbg.fetch_contract_parameter(tickers_zero_curve, "MATURITY")
 
 #tickers para floating leg
-
-tickers_floating_leg = ["US0003M CMPN Index",
+tickers_floating_leg_originais = ["US0003M CMPN Index",
                         "EDZ9 BGN Comdty",
                         "EDH0 BGN Comdty",
                         "EDM0 BGN Comdty",
                         "EDU0 BGN Comdty",
                         "EDZ0 BGN Comdty",
                         "USSWAP2 BGN Curncy",
+                        "USSWAP3 BGN Curncy",
+                        "USSWAP4 BGN Curncy",
+                        "USSWAP5 BGN Curncy",
+                        "USSW6 BGN Curncy",
+                        "USSWAP7 BGN Curncy",
+                        "USSW8 BGN Curncy",
+                        "USSW9 BGN Curncy",
+                        "USSWAP10 BGN Curncy",
+                        "USSWAP11 BGN Curncy",
+                        "USSWAP12 BGN Curncy",
+                        "USSWAP15 BGN Curncy",
+                        "USSWAP20 BGN Curncy",
+                        "USSWAP25 BGN Curncy",
+                        "USSWAP30 BGN Curncy",
+                        "USSWAP40 BGN Curncy",
+                        "USSWAP50 BGN Curncy"] #esses nao tem todos os dados
+
+tickers_floating_leg = ["USSWAP2 BGN Curncy",
                         "USSWAP3 BGN Curncy",
                         "USSWAP4 BGN Curncy",
                         "USSWAP5 BGN Curncy",
@@ -103,16 +123,15 @@ bbg_floating_leg = bbg.fetch_series(tickers_floating_leg, "PX_LAST",
                           enddate = pd.to_datetime('today'))
 bbg_floating_leg = bbg_floating_leg.transpose()
 
-print(bbg_floating_leg)
-
 bbg_floating_leg_m = bbg.fetch_contract_parameter(tickers_floating_leg, "MATURITY")
 
 
 # TODO achar o erro em interpolar, está aparecendo 'Timestamp' object is not subscriptable :
 
-# interpolate_zero_curve = pd.Series (data = df_bbg, index = df_bbg_m)
-# interpolate_zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
-# print(interpolate_zero_curve)
+zero_curve = pd.DataFrame(data = df_bbg.values, index = df_bbg_m.values)
+zero_curve = np.nan_to_num(zero_curve)
+print(zero_curve)
+zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
 
 def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
     dc1 = DayCounts(busdays, calendar=calendartype)
