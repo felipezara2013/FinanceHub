@@ -4,9 +4,8 @@ from pandas.tseries.offsets import DateOffset
 from bloomberg import BBG
 import numpy as np
 
-
-
 bbg = BBG()
+
 #Puxando os tickers para a curva zero
 
 tickers_zero_curve = ['S0023Z 1Y BLC2 Curncy',
@@ -74,6 +73,7 @@ zero_curve = zero_curve.astype(float)
 zero_curve = zero_curve.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='backward', limit_area=None, downcast=None)
 zero_curve.index = pd.to_datetime(zero_curve.index)
 
+#def que calcula a parte fixa do contrato de swap
 def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
     global zero_curve
     dc1 = DayCounts(busdays, calendar=calendartype)
@@ -98,23 +98,26 @@ def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcup
 
     days = pd.DataFrame(index = df['Accrual End'])
 
-    zero_curve_discount = pd.concat([zero_curve, days]).sort_index()
+    zero_curve_discount = pd.concat([zero_curve, days], sort=True).sort_index()
 
     zero_curve_discount = zero_curve_discount.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward',
                                           limit_area=None, downcast=None)
+
     zero_curve_discount = zero_curve_discount.drop(index = zero_curve.index)
-    print(zero_curve_discount)
-# todo descobrir como colocar os dados do zero curve na funcao abaixo, entao fazer isso p floating e consguir preco swap
-    df['Discount'] = 1/(1+zero_curve_discount*(df['Cumulative Days']/360))
+    zero_curve_discount = pd.DataFrame (data = zero_curve_discount.values)
+    df['zero_curve_discount'] = zero_curve_discount/100
 
+    df['Discount'] = 1/(1+(df['zero_curve_discount']*df['Cumulative Days']/360))
     df['Present Value'] = (df['Cash Flow'] * df['Discount'])
+    fixed = np.sum(df['Present Value'])
 
-    return df
+    return fixed
 
-print(swap_fixed_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 6, 10000000))
+#criando uma variavel para a parte float
+swap_fixed = swap_fixed_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 6, 10000000)
+
 
 # puxando tickers para floating leg
-
 tickers_floating_leg = ["USSWAP2 BGN Curncy",
                         "USSWAP3 BGN Curncy",
                         "USSWAP4 BGN Curncy",
@@ -143,10 +146,12 @@ bbg_floating_leg_m = bbg.fetch_contract_parameter(tickers_floating_leg, "MATURIT
 
 floating_rate_curve = pd.concat([bbg_floating_leg, bbg_floating_leg_m], axis=1, sort= True).set_index('MATURITY').sort_index()
 floating_rate_curve = floating_rate_curve.astype(float)
-floating_rate_curve = floating_rate_curve.apply(lambda x: np.nan_to_num(x))
-floating_rate_curve = floating_rate_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
+floating_rate_curve = floating_rate_curve.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
+floating_rate_curve.index = pd.to_datetime(floating_rate_curve.index)
 
-def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, periodcupons2=6, notional2=-1000000):
+#def que calcula a parte floating do contrato de swap
+
+def swap_floating_leg_pv(today, busdays, calendartype, maturity=10, periodcupons2=6, notional2=-1000000):
     global zero_curve
     global floating_rate_curve
 
@@ -159,50 +164,48 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
     df2['Accrual End'] = date_range[1:]
     df2['days'] = (df2['Accrual End'] - df2['Accrual Start']).dt.days
     df2['Notional'] = notional2
+    df2['Cumulative Days'] = df2['days'].cumsum()
 
     df2['Principal'] = 0
     lastline = df2.tail(1)
     df2.loc[lastline.index, 'Principal'] = notional2
 
-    days = pd.DataFrame(index=df['Accrual End'])
-    zero_curve_rate2 = pd.concat([floating_rate_curve, days], sort=True)
-    zero_curve_rate2 = zero_curve_rate2.interpolate(method='linear', axis=0, limit=None, inplace=False,
-                                                          limit_direction='forward',
+    days = pd.DataFrame(index=df2['Accrual End'])
+    floating_rate = pd.concat([floating_rate_curve, days], sort=True).sort_index()
+    floating_rate = floating_rate.interpolate(method='linear', axis=0, limit=None, inplace=False,
+                                                          limit_direction='both',
                                                           limit_area=None, downcast=None)
+    floating_rate = floating_rate.drop(index=floating_rate_curve.index)
+    floating_rate = pd.DataFrame(data=floating_rate.values)
+    df2['floating_leg_rate'] = floating_rate / 100
+    df2['floating_leg_rate'] = 1 / (1 + (df2['floating_leg_rate'] * df2['Cumulative Days'] / 360))
+    df2['floating_leg_rate'] = 1/(df2['floating_leg_rate'] * df2['Cumulative Days'] / 360)-(1/(df2['Cumulative Days'] / 360))
 
 
-
-
-    df2['Payment'] = (df2['days'] / 360) * zero_curve_rate2 * df2['Notional']
-
+    df2['Payment'] = df2['floating_leg_rate'] * df2['Notional']
     df2['Cash Flow'] = df2['Payment'] + df2['Principal']
 
-    df2['Cumulative Days'] = df2['days'].cumsum()
-
-    days = pd.DataFrame (index = df['Accrual End'])
     zero_curve_discount = pd.concat([zero_curve, days], sort = True)
     zero_curve_discount = zero_curve_discount.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward',
                                           limit_area=None, downcast=None)
 
+    zero_curve_discount = zero_curve_discount.drop(index=zero_curve.index)
+    zero_curve_discount = pd.DataFrame(data=zero_curve_discount.values)
+    df2['zero_curve_discount'] = zero_curve_discount / 100
 
-    print(zero_curve_discount)
+    df2['Discount'] = 1 / (1 + (df2['zero_curve_discount'] * df2['Cumulative Days'] / 360))
 
-    df2['Discount'] = 1 / (1 + zero_curve_discount * (df2['Cumulative Days'] / 360))
 
     df2['Present Value'] = (df2['Cash Flow'] * df2['Discount'])
+    floating = np.sum(df2['Present Value'])
 
-    return df2
+    return floating
+
+#criando uma variavel para a parte float
+swap_floating = swap_floating_leg_pv('2019-04-04', 'ACT/360', 'us_trading', 5, 3, -10000000)
+
+#criando uma variavel calcular o preco do contrato
+swap_contract = swap_fixed + swap_floating
+print(swap_contract)
 
 
-print(swap_floating_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 3, -10000000))
-
-
-
-
-################  teste ######################################
-
-# lista = [2.3,2.4,2.5,2.6,2.7]
-# df_bbg = lista
-# lista2 = ["07/31/2019", "08/31/2019", "09/30/2019", "10/31/2019", "11/30/2019"]
-# df_bbg_m = lista2
-#################################################################
