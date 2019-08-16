@@ -62,17 +62,56 @@ tickers_zero_curve = ['S0023Z 1Y BLC2 Curncy',
                       'S0023Z 42D BLC2 Curncy',
                       'S0023Z 48Y BLC2 Curncy']
 
+
 df_bbg = bbg.fetch_series(tickers_zero_curve, "PX_LAST",
                           startdate = pd.to_datetime('today'),
                           enddate = pd.to_datetime('today'))
 df_bbg = df_bbg.transpose()
 df_bbg_m = bbg.fetch_contract_parameter(tickers_zero_curve, "MATURITY")
 # fazendo a curva zero
-
 zero_curve = pd.concat([df_bbg, df_bbg_m], axis=1, sort= True).set_index('MATURITY').sort_index()
 zero_curve = zero_curve.astype(float)
-zero_curve = zero_curve.apply(lambda x: np.nan_to_num(x))
-zero_curve = zero_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
+zero_curve = zero_curve.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='backward', limit_area=None, downcast=None)
+zero_curve.index = pd.to_datetime(zero_curve.index)
+
+def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
+    global zero_curve
+    dc1 = DayCounts(busdays, calendar=calendartype)
+    today = pd.to_datetime(today)
+    date_range = pd.date_range(start=today, end=today + DateOffset(years=maturity), freq=DateOffset(months=periodcupons))
+    date_range = dc1.modified_following(date_range)
+
+    df = pd.DataFrame(data=date_range[:-1], columns=['Accrual Start'])
+    df['Accrual End'] = date_range[1:]
+    df['days'] = (df['Accrual End'] - df['Accrual Start']).dt.days
+    df['Notional'] = notional
+
+    df['Principal'] = 0
+    lastline = df.tail(1)
+    df.loc[lastline.index, 'Principal'] = notional
+
+    df['Payment'] = (df['days']/ 360) * rate * df['Notional']
+
+    df['Cash Flow'] = df['Payment'] + df['Principal']
+
+    df['Cumulative Days'] = df['days'].cumsum()
+
+    days = pd.DataFrame(index = df['Accrual End'])
+
+    zero_curve_discount = pd.concat([zero_curve, days]).sort_index()
+
+    zero_curve_discount = zero_curve_discount.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward',
+                                          limit_area=None, downcast=None)
+    zero_curve_discount = zero_curve_discount.drop(index = zero_curve.index)
+    print(zero_curve_discount)
+# todo descobrir como colocar os dados do zero curve na funcao abaixo, entao fazer isso p floating e consguir preco swap
+    df['Discount'] = 1/(1+zero_curve_discount*(df['Cumulative Days']/360))
+
+    df['Present Value'] = (df['Cash Flow'] * df['Discount'])
+
+    return df
+
+print(swap_fixed_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 6, 10000000))
 
 # puxando tickers para floating leg
 
@@ -107,37 +146,9 @@ floating_rate_curve = floating_rate_curve.astype(float)
 floating_rate_curve = floating_rate_curve.apply(lambda x: np.nan_to_num(x))
 floating_rate_curve = floating_rate_curve.interpolate(method='cubic', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
 
-
-def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
-
-    dc1 = DayCounts(busdays, calendar=calendartype)
-    today = pd.to_datetime(today)
-    date_range = pd.date_range(start=today, end=today + DateOffset(years=maturity), freq=DateOffset(months=periodcupons))
-    date_range = dc1.modified_following(date_range)
-
-    df = pd.DataFrame(data=date_range[:-1], columns=['Accrual Start'])
-    df['Accrual End'] = date_range[1:]
-    df['days'] = (df['Accrual End'] - df['Accrual Start']).dt.days
-    df['Notional'] = notional
-
-    df['Principal'] = 0
-    lastline = df.tail(1)
-    df.loc[lastline.index, 'Principal'] = notional
-
-    df['Payment'] = (df['days']/ 360) * rate * df['Notional']
-
-    df['Cash Flow'] = df['Payment'] + df['Principal']
-
-    df['Cumulative Days'] = df['days'].cumsum()
-    df['Discount'] = 1/(1+rate*(df['Cumulative Days']/360))
-
-    df['Present Value'] = (df['Cash Flow'] * df['Discount'])
-
-    return df
-
-print(swap_fixed_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5, 6, 10000000))
-
 def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, periodcupons2=6, notional2=-1000000):
+    global zero_curve
+    global floating_rate_curve
 
     dc1 = DayCounts(busdays, calendar=calendartype)
     today = pd.to_datetime(today)
@@ -153,12 +164,30 @@ def swap_floating_leg_pv(today, zero_rate, busdays, calendartype, maturity=10, p
     lastline = df2.tail(1)
     df2.loc[lastline.index, 'Principal'] = notional2
 
-    df2['Payment'] = (df2['days'] / 360) * zero_rate * df2['Notional']
+    days = pd.DataFrame(index=df['Accrual End'])
+    zero_curve_rate2 = pd.concat([floating_rate_curve, days], sort=True)
+    zero_curve_rate2 = zero_curve_rate2.interpolate(method='linear', axis=0, limit=None, inplace=False,
+                                                          limit_direction='forward',
+                                                          limit_area=None, downcast=None)
+
+
+
+
+    df2['Payment'] = (df2['days'] / 360) * zero_curve_rate2 * df2['Notional']
 
     df2['Cash Flow'] = df2['Payment'] + df2['Principal']
 
     df2['Cumulative Days'] = df2['days'].cumsum()
-    df2['Discount'] = 1 / (1 + zero_rate * (df2['Cumulative Days'] / 360))
+
+    days = pd.DataFrame (index = df['Accrual End'])
+    zero_curve_discount = pd.concat([zero_curve, days], sort = True)
+    zero_curve_discount = zero_curve_discount.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward',
+                                          limit_area=None, downcast=None)
+
+
+    print(zero_curve_discount)
+
+    df2['Discount'] = 1 / (1 + zero_curve_discount * (df2['Cumulative Days'] / 360))
 
     df2['Present Value'] = (df2['Cash Flow'] * df2['Discount'])
 
