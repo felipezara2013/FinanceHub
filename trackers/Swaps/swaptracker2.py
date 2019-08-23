@@ -1,3 +1,8 @@
+'''''
+Authors: Ana Barros (@anabab1999) and Felipe Delmaschio (@felipezara2013)
+'''
+
+
 from calendars import DayCounts
 import pandas as pd
 from pandas.tseries.offsets import DateOffset
@@ -67,13 +72,28 @@ df_bbg = bbg.fetch_series(tickers_zero_curve, "PX_LAST",
                           enddate = pd.to_datetime('today'))
 df_bbg = df_bbg.transpose()
 df_bbg_m = bbg.fetch_contract_parameter(tickers_zero_curve, "MATURITY")
+
+''''
+The Zero curve will be used on the interpolation, to discover the rate for a specific term.
+
+'''
+
 # fazendo a curva zero
 zero_curve = pd.concat([df_bbg, df_bbg_m], axis=1, sort= True).set_index('MATURITY').sort_index()
 zero_curve = zero_curve.astype(float)
 zero_curve = zero_curve.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='backward', limit_area=None, downcast=None)
 zero_curve.index = pd.to_datetime(zero_curve.index)
 
+
 #def que calcula a parte fixa do contrato de swap
+
+''''
+
+The function below will calculate the value of swap fixed leg 
+for a specific term. It calculates based on the interpolation of the Zero curve.
+
+'''
+
 def swap_fixed_leg_pv(today, rate, busdays, calendartype, maturity=10, periodcupons=6, notional=1000000):
     global zero_curve
     dc1 = DayCounts(busdays, calendar=calendartype)
@@ -118,6 +138,7 @@ swap_fixed = swap_fixed_leg_pv('2019-04-04', 0.02336, 'ACT/360', 'us_trading', 5
 
 
 # puxando tickers para floating leg
+
 tickers_floating_leg = ["USSWAP2 BGN Curncy",
                         "USSWAP3 BGN Curncy",
                         "USSWAP4 BGN Curncy",
@@ -144,12 +165,24 @@ bbg_floating_leg_m = bbg.fetch_contract_parameter(tickers_floating_leg, "MATURIT
 
  # fazendo a curva para achar taxas flutuantes
 
+
+'''''
+
+The floating leg curve will be used on the interpolation, to discover the rate for a specific term.
+'''
 floating_rate_curve = pd.concat([bbg_floating_leg, bbg_floating_leg_m], axis=1, sort= True).set_index('MATURITY').sort_index()
 floating_rate_curve = floating_rate_curve.astype(float)
 floating_rate_curve = floating_rate_curve.interpolate(method='linear', axis=0, limit=None, inplace=False, limit_direction='forward', limit_area=None, downcast=None)
 floating_rate_curve.index = pd.to_datetime(floating_rate_curve.index)
 
 #def que calcula a parte floating do contrato de swap
+''''
+
+The function below will calculate the value of swap floating leg
+for a specific term. It calculates based on the interpolation of the Floating curve.
+
+'''
+
 
 def swap_floating_leg_pv(today, busdays, calendartype, maturity=10, periodcupons2=6, notional2=-1000000):
     global zero_curve
@@ -205,6 +238,11 @@ def swap_floating_leg_pv(today, busdays, calendartype, maturity=10, periodcupons
 swap_floating = swap_floating_leg_pv('2019-04-04', 'ACT/360', 'us_trading', 5, 3, -10000000)
 
 #criando uma variavel calcular o preco do contrato
+''''
+
+The variable (swap_contract)  will calculate the value of swap contract
+
+'''
 swap_contract = swap_fixed + swap_floating
 print(swap_contract)
 
